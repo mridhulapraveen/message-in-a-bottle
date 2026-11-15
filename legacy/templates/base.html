@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Message in a Bottle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep: #0a2f4d;
+      --sea: #1a7fa3;
+      --foam: #e8fbff;
+      --sand: #f3dfae;
+      --parchment: #f7e8c3;
+      --ink: #4a3414;
+      --coral: #ff7a5c;
+      --coral-dark: #e05a3d;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Quicksand", "Segoe UI", sans-serif;
+      color: var(--deep);
+      background: linear-gradient(180deg, #5cc3dc 0%, #1a7fa3 45%, #0a2f4d 100%) fixed;
+      overflow-x: hidden;
+    }
+
+    .waves { position: fixed; left: 0; right: 0; bottom: 0; height: 140px;
+             pointer-events: none; z-index: 0; }
+    .wave { position: absolute; left: 0; right: 0; bottom: 0; height: 120px;
+            background-repeat: repeat-x; background-size: 1200px 120px; }
+    .wave.w1 { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,60 C150,100 350,0 600,60 C850,120 1050,20 1200,60 L1200,120 L0,120 Z' fill='%23ffffff' fill-opacity='.18'/%3E%3C/svg%3E");
+                animation: drift 14s linear infinite; }
+    .wave.w2 { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,60 C150,100 350,0 600,60 C850,120 1050,20 1200,60 L1200,120 L0,120 Z' fill='%2389dff0' fill-opacity='.22'/%3E%3C/svg%3E");
+                animation: drift 22s linear infinite reverse; bottom: -14px; }
+    @keyframes drift { from { background-position-x: 0; } to { background-position-x: 1200px; } }
+
+    .bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .bubbles span { position: absolute; bottom: -40px; border-radius: 50%;
+                    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.8), rgba(255,255,255,.15));
+                    animation: rise linear infinite; }
+    @keyframes rise { to { transform: translateY(-110vh) translateX(30px); opacity: 0; } }
+
+    .page { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 1rem 1rem 9rem; }
+    header.top { display: flex; justify-content: space-between; align-items: center;
+                 padding: .5rem 0 1rem; color: #fff; }
+    header.top a { color: #fff; text-decoration: none; }
+    .brand { display: flex; align-items: center; gap: .5rem;
+             font-family: "Caveat", cursive; font-size: 2rem; font-weight: 700;
+             text-shadow: 0 2px 6px rgba(0,0,0,.25); }
+    .brand svg { width: 34px; height: 34px; }
+    .who { font-weight: 600; font-size: .95rem; }
+    .who a { text-decoration: underline; }
+
+    h1, h2 { font-family: "Caveat", cursive; margin: .4rem 0; }
+    h1 { font-size: 2.6rem; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.3); }
+    h2 { font-size: 1.8rem; }
+    .lead { color: var(--foam); font-size: 1.05rem; text-shadow: 0 1px 4px rgba(0,0,0,.25); }
+    .back { color: #fff; font-weight: 600; text-decoration: none; }
+    .back:hover { text-decoration: underline; }
+
+    .card { background: rgba(255,255,255,.88); backdrop-filter: blur(6px);
+            border-radius: 18px; padding: 1.1rem 1.25rem; margin: 1rem 0;
+            box-shadow: 0 8px 24px rgba(5,30,50,.25); }
+    .card h2 { color: var(--deep); }
+
+    .scroll { background: linear-gradient(180deg, #fbefcf, var(--parchment));
+              color: var(--ink); border: 2px solid #d9bd7e; border-radius: 10px;
+              padding: 1.1rem 1.4rem; margin: 1rem 0;
+              box-shadow: 0 10px 22px rgba(5,30,50,.3), inset 0 0 30px rgba(180,130,50,.18); }
+    .scroll small { text-transform: uppercase; letter-spacing: .12em; font-weight: 700; opacity: .7; }
+    .prompt { font-family: "Caveat", cursive; font-size: 2.2rem; line-height: 1.1; margin: .3rem 0; }
+
+    .group-link { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.1rem;
+                  margin: .6rem 0; border-radius: 16px; text-decoration: none;
+                  background: rgba(255,255,255,.9); color: var(--deep); font-weight: 700;
+                  font-size: 1.1rem; box-shadow: 0 6px 16px rgba(5,30,50,.25);
+                  transition: transform .15s ease; }
+    .group-link:hover { transform: translateY(-2px) rotate(-.5deg); }
+    .group-link svg { width: 28px; height: 28px; flex: none; }
+
+    input[type=text], input[type=password], textarea {
+      width: 100%; padding: .7rem .9rem; margin: .3rem 0 .6rem;
+      border: 2px solid #b5e3ef; border-radius: 12px; font: inherit; background: #fff; color: var(--deep);
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--sea); }
+    button, summary.btn {
+      font: inherit; font-weight: 700; cursor: pointer; border: none; border-radius: 999px;
+      padding: .65rem 1.2rem; margin: .25rem .25rem .25rem 0;
+      background: var(--coral); color: #fff; box-shadow: 0 4px 0 var(--coral-dark);
+      transition: transform .1s ease, box-shadow .1s ease;
+    }
+    button:hover, summary.btn:hover { transform: translateY(-1px); }
+    button:active, summary.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--coral-dark); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    button.sea, summary.btn.sea { background: var(--sea); box-shadow: 0 4px 0 #0f5873; }
+    button.ghost { background: #fff; color: #b0392a; box-shadow: 0 3px 0 #e6b9b0; padding: .4rem .9rem; font-size: .9rem; }
+    details { display: inline-block; vertical-align: top; width: 100%; }
+    summary { list-style: none; display: inline-block; }
+    summary::-webkit-details-marker { display: none; }
+
+    .flash { background: var(--sand); color: var(--ink); border-left: 6px solid var(--coral);
+             padding: .7rem 1rem; border-radius: 10px; margin: .6rem 0; word-break: break-word;
+             box-shadow: 0 4px 10px rgba(5,30,50,.2); font-weight: 600; }
+
+    .entry { background: rgba(255,255,255,.9); border-radius: 16px; padding: .8rem 1rem;
+             margin: .8rem 0; box-shadow: 0 6px 16px rgba(5,30,50,.25); }
+    .entry .meta { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+    .entry .meta strong { font-family: "Caveat", cursive; font-size: 1.6rem; }
+    .entry .meta small { color: #4b7a8c; }
+    video, audio { width: 100%; margin: .5rem 0; border-radius: 12px; }
+    .empty { color: var(--foam); text-align: center; font-style: italic; padding: 1rem; }
+
+    .code { display: inline-block; font-family: "Courier New", monospace; font-size: 1.8rem;
+            font-weight: 700; letter-spacing: .3rem; padding: .3rem 1rem; margin: .2rem 0;
+            background: var(--parchment); color: var(--ink); border: 2px dashed #b9955a; border-radius: 8px; }
+    .timer { font-size: 1.2rem; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .members { color: #3a6a7d; }
+
+    .hero-bottle { display: block; width: 110px; margin: .5rem auto; animation: bob 4s ease-in-out infinite;
+                   filter: drop-shadow(0 8px 10px rgba(0,0,0,.3)); }
+    @keyframes bob { 0%,100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-12px) rotate(6deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .wave, .bubbles span, .hero-bottle { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bubbles" aria-hidden="true">
+    <span style="left:8%;  width:14px; height:14px; animation-duration:16s; animation-delay:0s"></span>
+    <span style="left:22%; width:8px;  height:8px;  animation-duration:12s; animation-delay:3s"></span>
+    <span style="left:38%; width:20px; height:20px; animation-duration:20s; animation-delay:6s"></span>
+    <span style="left:55%; width:10px; height:10px; animation-duration:14s; animation-delay:1s"></span>
+    <span style="left:68%; width:16px; height:16px; animation-duration:18s; animation-delay:8s"></span>
+    <span style="left:82%; width:9px;  height:9px;  animation-duration:13s; animation-delay:4s"></span>
+    <span style="left:93%; width:18px; height:18px; animation-duration:22s; animation-delay:10s"></span>
+  </div>
+  <div class="waves" aria-hidden="true"><div class="wave w2"></div><div class="wave w1"></div></div>
+
+  <div class="page">
+    <header class="top">
+      <a class="brand" href="{{ url_for('home') }}">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <g transform="rotate(35 32 32)">
+            <rect x="26" y="4" width="12" height="9" rx="2" fill="#c98a4b"/>
+            <path d="M27 13h10v8c0 3 9 5 9 14v17a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6V35c0-9 9-11 9-14z" fill="#bfeaf2" stroke="#fff" stroke-width="2"/>
+            <rect x="25" y="34" width="14" height="18" rx="2" fill="#f7e8c3"/>
+            <path d="M28 39h8M28 43h8M28 47h5" stroke="#b9955a" stroke-width="1.5" stroke-linecap="round"/>
+          </g>
+        </svg>
+        Message in a Bottle
+      </a>
+      {% if user %}<span class="who">⚓ {{ user.username }} · <a href="{{ url_for('logout') }}">Log out</a></span>{% endif %}
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+node_modules
+.next
+.venv
+__pycache__
+uploads
+*.db
+*.db-wal
+*.db-shm
+.env
+.env*.local
+legacy/__pycache__

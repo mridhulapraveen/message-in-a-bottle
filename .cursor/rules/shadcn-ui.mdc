@@ -1,0 +1,7 @@
+---
+description: Use shadcn/ui and Radix for new interface work
+globs: "**/*.{tsx,css}"
+alwaysApply: false
+---
+
+For new or changed interface design, use shadcn/ui components built on Radix primitives. Add them with the shadcn CLI into `components/ui` rather than hand-rolling dialogs, menus, buttons, popovers, or other controls shadcn already provides. Theme those components to fit the ocean look. Leave existing custom markup alone unless that surface is being redesigned.

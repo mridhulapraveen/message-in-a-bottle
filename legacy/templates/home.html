@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+{% if not user %}
+  <svg class="hero-bottle" viewBox="0 0 64 64" aria-hidden="true">
+    <g transform="rotate(35 32 32)">
+      <rect x="26" y="4" width="12" height="9" rx="2" fill="#c98a4b"/>
+      <path d="M27 13h10v8c0 3 9 5 9 14v17a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6V35c0-9 9-11 9-14z" fill="#bfeaf2" stroke="#fff" stroke-width="2"/>
+      <rect x="25" y="34" width="14" height="18" rx="2" fill="#f7e8c3"/>
+      <path d="M28 39h8M28 43h8M28 47h5" stroke="#b9955a" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
+  </svg>
+  <h1 style="text-align:center">Send a message across the sea</h1>
+  <p class="lead" style="text-align:center">
+    Answer a short daily prompt with a video or audio message and stay close to your crew.
+  </p>
+
+  <div class="card">
+    <h2>Welcome back, sailor</h2>
+    <form method="post" action="{{ url_for('login') }}">
+      <input type="text" name="username" placeholder="Username" required autocomplete="username">
+      <input type="password" name="password" placeholder="Password" required autocomplete="current-password">
+      <button class="sea">Set sail</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>New to the ship? Sign the crew roster</h2>
+    <form method="post" action="{{ url_for('signup') }}">
+      <input type="text" name="username" placeholder="Choose a username" required autocomplete="username">
+      <input type="password" name="password" placeholder="Choose a password (6+ characters)" required autocomplete="new-password">
+      <input type="password" name="confirm" placeholder="Confirm password" required autocomplete="new-password">
+      <button>Create account</button>
+    </form>
+  </div>
+{% else %}
+  <h1>Your bottles</h1>
+  <p class="lead">Each journal is a bottle you and your friends keep filling.</p>
+
+  {% for g in groups %}
+    <a class="group-link" href="{{ url_for('group', group_id=g.id) }}">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <g transform="rotate(35 32 32)">
+          <rect x="26" y="4" width="12" height="9" rx="2" fill="#c98a4b"/>
+          <path d="M27 13h10v8c0 3 9 5 9 14v17a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6V35c0-9 9-11 9-14z" fill="#bfeaf2" stroke="#1a7fa3" stroke-width="2"/>
+          <rect x="25" y="34" width="14" height="18" rx="2" fill="#f7e8c3"/>
+        </g>
+      </svg>
+      {{ g.name }}
+    </a>
+  {% else %}
+    <div class="card">
+      <p>The sea is empty! Cast a new bottle, or add one with a code from a friend.</p>
+    </div>
+  {% endfor %}
+
+  <details>
+    <summary class="btn">🍾 New journal</summary>
+    <form method="post" action="{{ url_for('new_group') }}" class="card">
+      <h2>Cast a new bottle</h2>
+      <input type="text" name="group_name" placeholder="Journal name" maxlength="60" required>
+      <button>Create journal</button>
+    </form>
+  </details>
+
+  <details>
+    <summary class="btn sea">🧭 Add journal</summary>
+    <form method="post" action="{{ url_for('add_journal') }}" class="card">
+      <h2>Found a bottle?</h2>
+      <input type="text" name="code" placeholder="Enter journal code" maxlength="10" required autocomplete="off">
+      <button class="sea">Join</button>
+    </form>
+  </details>
+{% endif %}
+{% endblock %}

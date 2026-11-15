@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a class="back" href="{{ url_for('home') }}">← Back to the shore</a></p>
+<h1>{{ group.name }}</h1>
+
+{% if prompt_row %}
+  <div class="scroll">
+    <small>Today's message in a bottle</small>
+    <p class="prompt">{{ prompt_row.prompt }}</p>
+  </div>
+
+  <div class="card">
+    <h2>Your reply (up to {{ max_seconds // 60 }} minutes)</h2>
+    <button id="btn-video" onclick="startRecording('video')">🎥 Record video</button>
+    <button id="btn-audio" class="sea" onclick="startRecording('audio')">🎙️ Record audio</button>
+    <button id="btn-stop" class="ghost" onclick="stopRecording()" disabled>Stop</button>
+    <span id="timer" class="timer"></span>
+    <video id="preview" controls playsinline style="display:none"></video>
+    <button id="btn-send" class="sea" onclick="send()" style="display:none">🌊 Cast into the sea</button>
+  </div>
+{% else %}
+  <div class="scroll">
+    <h2>You're first at the shore today!</h2>
+    <p>Pick the message everyone will answer.</p>
+    <form method="post" action="{{ url_for('set_prompt', group_id=group.id) }}">
+      <input type="hidden" name="mode" value="random">
+      <button>🎲 Pull a random prompt from the sea</button>
+    </form>
+    <p>or write your own:</p>
+    <form method="post" action="{{ url_for('set_prompt', group_id=group.id) }}">
+      <input type="hidden" name="mode" value="custom">
+      <textarea name="prompt" rows="2" maxlength="200" placeholder="Write your message..." required></textarea>
+      <button class="sea">Seal the bottle</button>
+    </form>
+  </div>
+{% endif %}
+
+<h2 style="color:#fff">Messages washed ashore</h2>
+{% for e in entries %}
+  <div class="entry">
+    <div class="meta">
+      <strong>{{ e.username }}</strong>
+      {% if e.created_at %}
+        <small><time class="when" datetime="{{ e.created_at }}">{{ e.created_at }}</time></small>
+      {% endif %}
+    </div>
+    {% if e.kind == "video" %}
+      <video controls playsinline src="{{ url_for('uploaded_file', filename=e.filename) }}"></video>
+    {% else %}
+      <audio controls src="{{ url_for('uploaded_file', filename=e.filename) }}"></audio>
+    {% endif %}
+    {% if e.user_id == user.id %}
+      <form method="post" action="{{ url_for('delete', entry_id=e.id) }}"
+            onsubmit="return confirm('Throw this message back to the sea?')">
+        <button class="ghost">Delete</button>
+      </form>
+    {% endif %}
+  </div>
+{% else %}
+  <p class="empty">Nothing has washed ashore yet today.</p>
+{% endfor %}
+
+<div class="card">
+  <h2>Invite your crew</h2>
+  <p>Share this code. Friends tap <strong>Add journal</strong> on their home page and enter it:</p>
+  <div class="code">{{ group.code }}</div>
+  <p><small>Or send this link: {{ share_link }}</small></p>
+  <p class="members"><small>Crew: {% for m in members %}{{ m.username }}{% if not loop.last %}, {% endif %}{% endfor %}</small></p>
+</div>
+
+<div id="config" data-max-seconds="{{ max_seconds }}" hidden></div>
+<script>
+  const MAX_SECONDS = Number(document.getElementById("config").dataset.maxSeconds);
+  let recorder, stream, chunks = [], blob, kind, timerId, seconds = 0;
+
+  const preview = document.getElementById("preview");
+  const timerEl = document.getElementById("timer");
+
+  function fmt(s) {
+    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  }
+
+  function pickMime(k) {
+    const candidates = k === "video"
+      ? ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"]
+      : ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
+    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+  }
+
+  async function startRecording(k) {
+    kind = k;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: k === "video" });
+    } catch (err) {
+      alert("Couldn't access your camera/microphone. Check browser permissions (and use HTTPS or localhost).");
+      return;
+    }
+    const mimeType = pickMime(k);
+    const options = {};
+    if (mimeType) options.mimeType = mimeType;
+    if (k === "video") options.videoBitsPerSecond = 1000000;
+    recorder = new MediaRecorder(stream, options);
+    chunks = [];
+    recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    recorder.onstop = () => {
+      clearInterval(timerId);
+      blob = new Blob(chunks, { type: recorder.mimeType || mimeType || "video/webm" });
+      stream.getTracks().forEach((t) => t.stop());
+      preview.srcObject = null;
+      preview.muted = false;
+      preview.src = URL.createObjectURL(blob);
+      preview.controls = true;
+      document.getElementById("btn-send").style.display = "inline-block";
+      document.getElementById("btn-video").disabled = false;
+      document.getElementById("btn-audio").disabled = false;
+    };
+
+    if (k === "video") {
+      preview.srcObject = stream;
+      preview.muted = true;
+      preview.controls = false;
+      preview.style.display = "block";
+      preview.play();
+    } else {
+      preview.style.display = "none";
+    }
+
+    recorder.start();
+    seconds = 0;
+    timerEl.textContent = "● " + fmt(0) + " / " + fmt(MAX_SECONDS);
+    timerId = setInterval(() => {
+      seconds++;
+      timerEl.textContent = "● " + fmt(seconds) + " / " + fmt(MAX_SECONDS);
+      if (seconds >= MAX_SECONDS) stopRecording();
+    }, 1000);
+
+    document.getElementById("btn-stop").disabled = false;
+    document.getElementById("btn-video").disabled = true;
+    document.getElementById("btn-audio").disabled = true;
+    document.getElementById("btn-send").style.display = "none";
+  }
+
+  function stopRecording() {
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    document.getElementById("btn-stop").disabled = true;
+    timerEl.textContent = "Recorded " + fmt(seconds);
+    preview.style.display = "block";
+  }
+
+  async function send() {
+    const btn = document.getElementById("btn-send");
+    btn.disabled = true;
+    btn.textContent = "Casting off...";
+    const form = new FormData();
+    const ext = (blob.type || "").includes("mp4") ? "mp4" : "webm";
+    form.append("media", blob, "recording." + ext);
+    form.append("kind", kind);
+    const res = await fetch("{{ url_for('upload', group_id=group.id) }}", { method: "POST", body: form });
+    if (res.ok) {
+      location.reload();
+    } else {
+      alert("Upload failed: " + (await res.text()));
+      btn.disabled = false;
+      btn.textContent = "🌊 Cast into the sea";
+    }
+  }
+
+  document.querySelectorAll("time.when").forEach((el) => {
+    const d = new Date(el.getAttribute("datetime"));
+    if (!isNaN(d)) {
+      el.textContent = d.toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+    }
+  });
+</script>
+{% endblock %}
